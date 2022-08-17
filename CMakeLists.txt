@@ -29,7 +29,6 @@ if (VITA)
 
   set(VITA_APP_NAME "Nanosaur")
   set(VITA_TITLEID  "NANOSAUR1")
-  set(VITA_VERSION  "1.0")
   set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 endif()
 
@@ -304,7 +303,7 @@ endif()
 
 if(VITA)
   ## Create Vita files
-  vita_create_self(eboot.bin ${GAME_TARGET})
+  vita_create_self(eboot.bin ${GAME_TARGET} UNSAFE)
 
   vita_create_vpk(${VITA_APP_NAME}.vpk ${VITA_TITLEID} eboot.bin
     VERSION ${VITA_VERSION}
