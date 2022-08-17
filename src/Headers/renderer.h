@@ -6,13 +6,16 @@
 #define ALLOW_FADE		1
 #endif
 
+#ifdef __vita__
+#define CHECK_GL_ERROR()
+#else
 #define CHECK_GL_ERROR()												\
 	do {					 											\
 		GLenum err = glGetError();										\
 		if (err != GL_NO_ERROR)											\
 			DoFatalGLError(err, __func__, __LINE__);					\
 	} while(0)
-
+#endif
 #pragma mark -
 
 typedef struct RenderStats

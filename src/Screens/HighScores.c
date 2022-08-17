@@ -11,6 +11,23 @@
 
 #include "game.h"
 
+#ifdef __vita__
+#include <vitasdk.h>
+
+void ascii2utf(uint16_t* dst, char* src){
+	if(!src || !dst)return;
+	while(*src)*(dst++)=(*src++);
+	*dst=0x00;
+}
+
+void utf2ascii(char* dst, uint16_t* src){
+	if(!src || !dst)return;
+	while(*src)*(dst++)=(*(src++))&0xFF;
+	*dst=0x00;
+}
+
+uint8_t skip_score_show = 0;
+#endif
 
 /****************************/
 /*    PROTOTYPES            */
@@ -86,7 +103,9 @@ TQ3Vector3D	camDelta = {0,0,0};
 		
 		
 			/* SHOW THE SCORES */
-
+#ifdef __vita__
+	if (!skip_score_show) {
+#endif
 	do
 	{
 		QD3D_CalcFramesPerSecond();					
@@ -109,7 +128,10 @@ TQ3Vector3D	camDelta = {0,0,0};
 			break;
 			
 	}while(gGameViewInfoPtr->cameraPlacement.cameraLocation.x < 2200);
-
+#ifdef __vita__
+	}
+	skip_score_show = 0;
+#endif
 
 			/* CLEANUP */
 
@@ -371,8 +393,43 @@ short		i;
 			/*************/
 		
 	
-	QD3D_CalcFramesPerSecond();					
+	QD3D_CalcFramesPerSecond();
+	
+#ifdef __vita__
+	skip_score_show = 1;
 
+	uint16_t title[64];
+	uint16_t initial_text[MAX_NAME_LENGTH];
+	uint16_t input_text[MAX_NAME_LENGTH];
+	char title_keyboard[64];
+	char nickname[32] = {};
+	sceAppUtilSystemParamGetString(SCE_SYSTEM_PARAM_ID_USERNAME, nickname, MAX_NAME_LENGTH);
+	
+	sprintf(title_keyboard, "Insert highscore nickname");
+	ascii2utf(title, title_keyboard);
+	ascii2utf(nickname, initial_text);
+	ascii2utf(nickname, input_text);
+	
+	SceImeDialogParam param;
+	sceImeDialogParamInit(&param);
+	param.supportedLanguages = 0x0001FFFF;
+	param.languagesForced = SCE_TRUE;
+	param.type = SCE_IME_TYPE_BASIC_LATIN;
+	param.title = title;
+	param.maxTextLength = MAX_NAME_LENGTH - 1;
+	param.initialText = initial_text;
+	param.inputTextBuffer = input_text;
+	sceImeDialogInit(&param);
+	while (sceImeDialogGetStatus() != 2) {
+		vglSwapBuffers(GL_TRUE);
+	}
+	SceCommonDialogStatus status = sceImeDialogGetStatus();
+	SceImeDialogResult result;
+	memset(&result, 0, sizeof(SceImeDialogResult));
+	sceImeDialogGetResult(&result);
+	utf2ascii(gNewName.name, input_text);
+	sceImeDialogTerm();
+#else
 	do
 	{
 		UpdateInput();
@@ -380,7 +437,6 @@ short		i;
 		MoveObjects();
 
 				/* CHECK FOR KEY */
-
 		if (TypeNewKey())
 		{
 			UpdateNameAndCursor(true,LEFT_EDGE,0,0);
@@ -396,6 +452,8 @@ short		i;
 				
 		QD3D_DrawScene(gGameViewInfoPtr,DrawObjects);	
 	} while (!GetSDLKeyState(SDL_SCANCODE_RETURN) && !GetSDLKeyState(SDL_SCANCODE_KP_ENTER));
+#endif
+
 
 			/* CLEANUP */
 

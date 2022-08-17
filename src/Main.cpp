@@ -12,6 +12,15 @@
 #include <unistd.h>
 #endif
 
+#ifdef __vita__
+#include <unistd.h> 
+#include <vitasdk.h>
+extern "C" {
+int _newlib_heap_size_user = 256 * 1024 * 1024;
+void vglInitExtended(int legacy_pool_size, int width, int height, int ram_threshold, SceGxmMultisampleMode msaa);
+};
+#endif
+
 extern "C"
 {
 	// bare minimum from Window.c to satisfy externs in game code
@@ -47,6 +56,8 @@ static fs::path FindGameData()
 
 	dataPath = pathbuf;
 	dataPath = dataPath.parent_path().parent_path() / "Resources";
+#elif defined(__vita__)
+	dataPath = "ux0:data/Nanosaur/Data";
 #else
 	dataPath = "Data";
 #endif
@@ -145,6 +156,23 @@ static void Shutdown()
 
 int main(int argc, char** argv)
 {
+#ifdef __vita__
+	sceAppUtilInit(&(SceAppUtilInitParam){}, &(SceAppUtilBootParam){});
+	SceCommonDialogConfigParam cmnDlgCfgParam;
+	sceCommonDialogConfigParamInit(&cmnDlgCfgParam);
+	sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_LANG, (int *)&cmnDlgCfgParam.language);
+	sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_ENTER_BUTTON, (int *)&cmnDlgCfgParam.enterButtonAssign);
+	sceCommonDialogSetConfigParam(&cmnDlgCfgParam);
+	
+	SDL_setenv("VITA_DISABLE_TOUCH_BACK", "1", 1);
+	scePowerSetArmClockFrequency(444);
+	scePowerSetBusClockFrequency(222);
+	scePowerSetGpuClockFrequency(222);
+	scePowerSetGpuXbarClockFrequency(166);
+	vglInitExtended(4 * 1024 * 1024, 960, 544, 8 * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
+	chdir("ux0:data");
+#endif
+
 	bool success = true;
 	std::string uncaught;
 
