@@ -659,38 +659,13 @@ static void DrawMeshList(int renderPass, const MeshQueueEntry* entry)
 		if (!matrixPushedYet && entry->transform)
 		{
 			glPushMatrix();
-#ifndef __vita__
 			glMultMatrixf((float*)entry->transform->value);
-#endif
 			matrixPushedYet = true;
 		}
 
-#ifdef __vita__
-		// Credits: ywnico
-		// Copy mesh points and apply transformation manually,
-		// since I couldn't get it working with vitaGL.
-		// It probably just needs to be transposed or something....
-		TQ3Point3D* pointsCopy = (TQ3Point3D*) NewPtrClear((mesh->numPoints) * sizeof(TQ3Point3D));
-
-		memcpy(pointsCopy, mesh->points, mesh->numPoints*sizeof(TQ3Point3D));
-		for (int j = 0; j < mesh->numPoints; j++) {
-			const TQ3Matrix4x4* m = entry->transform;
-			if (m) {
-				TQ3Point3D v = mesh->points[j];
-				float x2 = (m->value[0][0])*v.x + (m->value[1][0])*v.y + (m->value[2][0])*v.z + (m->value[3][0]);
-				float y2 = (m->value[0][1])*v.x + (m->value[1][1])*v.y + (m->value[2][1])*v.z + (m->value[3][1]);
-				float z2 = (m->value[0][2])*v.x + (m->value[1][2])*v.y + (m->value[2][2])*v.z + (m->value[3][2]);
-				pointsCopy[j].x = x2;
-				pointsCopy[j].y = y2;
-				pointsCopy[j].z = z2;
-			}
-		}
-		
-		glVertexPointer(3, GL_FLOAT, 0, pointsCopy);
-#else
 		// Submit vertex and normal data
 		glVertexPointer(3, GL_FLOAT, 0, mesh->points);
-#endif
+
 		glNormalPointer(GL_FLOAT, 0, mesh->vertexNormals);
 		CHECK_GL_ERROR();
 
@@ -711,9 +686,6 @@ static void DrawMeshList(int renderPass, const MeshQueueEntry* entry)
 
 		// Update stats
 		gRenderStats.trianglesDrawn += mesh->numTriangles;
-#ifdef __vita__	
-		DisposePtr((Ptr) pointsCopy);
-#endif
 	}
 
 	if (matrixPushedYet)
