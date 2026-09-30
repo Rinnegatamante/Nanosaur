@@ -147,6 +147,9 @@ target_link_libraries(${GAME_TARGET} ${GAME_LIBRARIES})
 
 # VITA
 if(VITA)
+set_property(SOURCE src/Screens/HighScores.c APPEND PROPERTY COMPILE_OPTIONS -Wno-error=incompatible-pointer-types)
+# Reserve room for SCE import metadata between load segments.
+target_link_options(${GAME_TARGET} PRIVATE "-Wl,--defsym=__sce_headroom=0x10000")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-q -O3 -I$ENV{VITASDK}/arm-vita-eabi/include/SDL2 -fpermissive -fno-optimize-sibling-calls -fsigned-char")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O3 -I$ENV{VITASDK}/arm-vita-eabi/include/SDL2 -fno-optimize-sibling-calls -fsigned-char")
 

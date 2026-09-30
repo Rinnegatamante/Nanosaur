@@ -14,6 +14,9 @@
 #ifdef __vita__
 #include <vitasdk.h>
 
+// SDL_opengl.h conflicts with several vitaGL OpenGL declarations.
+void vglSwapBuffers(GLboolean has_commondialog);
+
 void ascii2utf(uint16_t* dst, char* src){
 	if(!src || !dst)return;
 	while(*src)*(dst++)=(*src++);
